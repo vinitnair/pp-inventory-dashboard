@@ -1,0 +1,1658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Power Platform Inventory</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+  --cp-c1: #b11f4b;
+  --cp-c2: #d4547a;
+  --cp-c3: #e894ac;
+  --cp-c4: #7a1535;
+  --cp-c5: #919191;
+  --cp-c6: #cfcfcf;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+  --cp-c1: #fd8ea1;
+  --cp-c2: #e2687f;
+  --cp-c3: #b8465c;
+  --cp-c4: #ffc2cd;
+  --cp-c5: #919191;
+  --cp-c6: #5f5f5f;
+}
+
+* { box-sizing: border-box; }
+/* Class-level display rules outrank the UA [hidden] rule, so enforce it. */
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding: 32px 24px 64px; }
+
+header.top { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+header.top h1 { margin: 0 0 4px; font-size: 26px; font-weight: 650; letter-spacing: -0.01em; }
+.sub { color: var(--cp-text-muted); font-size: 13px; }
+.sub code { font-family: Consolas, "Courier New", Courier, monospace; font-size: 12px; }
+.spacer { flex: 1 1 auto; }
+
+button.ghost {
+  background: var(--cp-surface);
+  color: var(--cp-text);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+button.ghost:hover { border-color: var(--cp-border-strong); background: var(--cp-surface-soft); }
+
+.card {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+}
+.card h2 {
+  margin: 0; padding: 16px 20px; font-size: 14px; font-weight: 650;
+  border-bottom: 1px solid var(--cp-border); letter-spacing: -0.005em;
+}
+.card h2 .hint { float: right; font-weight: 400; color: var(--cp-text-soft); font-size: 12px; }
+.card .body { padding: 16px 20px 20px; }
+
+/* Fixed column counts so rows always fill evenly; auto-fit leaves orphan cards. */
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.kpi { padding: 16px 18px; display: flex; flex-direction: column; }
+.kpi .n { font-size: 30px; font-weight: 620; line-height: 1.15; letter-spacing: -0.02em; }
+.kpi .l { color: var(--cp-text); font-size: 13px; font-weight: 620; margin-top: 2px; }
+.kpi .s { color: var(--cp-text-soft); font-size: 11.5px; margin-top: 3px; line-height: 1.35; }
+.kpi.accent .n { color: var(--cp-accent); }
+.kpi .d { font-size: 11.5px; margin-top: auto; padding-top: 6px; color: var(--cp-text-soft); }
+.kpi .d.up { color: var(--cp-success); }
+.kpi .d.down { color: var(--cp-danger); }
+
+.grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+/* Cards stacked straight into a tab need their own gap; ones inside a grid get it from the gap. */
+[role="tabpanel"] > .card { margin-bottom: 16px; }
+[role="tabpanel"] > .card:last-child { margin-bottom: 0; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+.envs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+
+/* tabs */
+/* overflow-x:auto implies overflow-y:auto, and the buttons' -1px margin overflows
+   by exactly that, which draws a phantom vertical scrollbar. Pin the y axis. */
+.tabs { display: flex; gap: 2px; margin-bottom: 20px; border-bottom: 1px solid var(--cp-border); overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.tabs button {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--cp-text-muted); font: inherit; font-size: 13.5px; font-weight: 620;
+  padding: 10px 16px; cursor: pointer; white-space: nowrap; margin-bottom: -1px;
+}
+.tabs button:hover { color: var(--cp-text); }
+.tabs button[aria-selected="true"] { color: var(--cp-accent); border-bottom-color: var(--cp-accent); }
+.tabs button:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: -2px; }
+
+/* lock screen */
+.lock { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.lock-box { padding: 28px 30px; max-width: 380px; width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.lock-box h1 { margin: 0; font-size: 19px; }
+.lock-box p { margin: 0; font-size: 13px; color: var(--cp-text-muted); }
+.lock-box input { padding: 10px 12px; font-size: 14px; border-radius: 0.625rem; border: 1px solid var(--cp-border); background: var(--cp-bg-elevated); color: var(--cp-text); }
+.lock-box input:focus { outline: 2px solid var(--cp-accent-soft); border-color: var(--cp-accent); }
+button.primary { background: var(--cp-accent); color: var(--cp-accent-fg); border: none; border-radius: 0.625rem; padding: 10px 14px; font: inherit; font-weight: 620; cursor: pointer; }
+button.primary:hover { background: var(--cp-accent-hover); }
+button.primary:disabled { opacity: 0.6; cursor: default; }
+.lock-err { color: var(--cp-danger); font-size: 12.5px; }
+.lock-note { color: var(--cp-text-soft); font-size: 11.5px; line-height: 1.4; }
+
+@media (max-width: 1100px) {
+  .kpis, .grid4, .envs { grid-template-columns: repeat(2, 1fr); }
+  .grid3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .kpis, .grid2, .grid3, .grid4, .envs { grid-template-columns: 1fr; }
+}
+
+/* trend columns */
+.trend { display: block; width: 100%; height: 150px; }
+.trend rect { fill: var(--cp-c2); }
+.trend rect:hover { fill: var(--cp-c1); }
+.trend .axis { fill: var(--cp-text-soft); font-size: 10px; }
+.trend .grid { stroke: var(--cp-border); stroke-width: 1; }
+
+/* donut */
+.donut-wrap { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.donut { flex: 0 0 auto; }
+.donut .hole-n { fill: var(--cp-text); font-size: 22px; font-weight: 620; text-anchor: middle; }
+.donut .hole-l { fill: var(--cp-text-soft); font-size: 9px; text-anchor: middle; text-transform: uppercase; letter-spacing: 0.06em; }
+.legend { flex: 1 1 120px; display: flex; flex-direction: column; gap: 6px; min-width: 120px; }
+.legend div { display: flex; align-items: center; gap: 7px; font-size: 12.5px; }
+.legend .sw { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
+.legend .lk { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.legend .lv { color: var(--cp-text-muted); font-variant-numeric: tabular-nums; }
+
+/* governance rows */
+.gov { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 24px; }
+.gov-row { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--cp-border); }
+.gov-n { font-size: 20px; font-weight: 620; font-variant-numeric: tabular-nums; color: var(--cp-text-soft); }
+.gov-n.hit { color: var(--cp-accent); }
+.gov-k { font-size: 13px; }
+.gov-h { font-size: 11.5px; color: var(--cp-text-soft); }
+@media (max-width: 1100px) { .gov { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .gov { grid-template-columns: 1fr; } }
+
+/* year over year, and archive scoring */
+.yoy { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 24px; }
+.yoy-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--cp-border); }
+.yoy-k { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.yoy-h { font-size: 11.5px; color: var(--cp-text-soft); }
+.yoy-v { font-size: 18px; font-weight: 620; font-variant-numeric: tabular-nums; text-align: right; }
+@media (max-width: 1100px) { .yoy { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .yoy { grid-template-columns: 1fr; } }
+
+.score { display: inline-block; min-width: 26px; text-align: center; padding: 2px 7px; border-radius: 999px;
+  font-variant-numeric: tabular-nums; font-size: 12.5px; font-weight: 620;
+  background: var(--cp-surface-soft); color: var(--cp-text-soft); }
+.score.s2 { color: var(--cp-text); }
+.score.s4 { background: color-mix(in srgb, var(--cp-accent) 18%, transparent); color: var(--cp-accent); }
+.score.s6 { background: var(--cp-accent); color: var(--cp-surface); }
+.score-help { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--cp-text-soft); line-height: 1.9; }
+
+.notice { padding: 13px 16px; margin-bottom: 16px; border: 1px solid var(--cp-border); border-radius: 10px;
+  background: var(--cp-surface-soft); font-size: 13px; color: var(--cp-text-soft); line-height: 1.6; }
+.notice code { background: var(--cp-surface); padding: 1px 5px; border-radius: 4px; }
+.flag { color: var(--cp-accent); font-weight: 620; }
+
+.bars { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; align-items: center; gap: 12px; }
+.bar-row .lbl { font-size: 13px; color: var(--cp-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { background: var(--cp-surface-soft); border-radius: 999px; height: 10px; overflow: hidden; }
+.bar-fill { background: var(--cp-accent); height: 100%; border-radius: 999px; min-width: 3px; }
+.bar-row .val { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--cp-text-muted); min-width: 34px; text-align: right; }
+.bar-row.clickable { cursor: pointer; }
+.bar-row.clickable:hover .lbl { color: var(--cp-accent); }
+.bar-row.clickable:hover .bar-fill { background: var(--cp-accent-hover); }
+
+.section-label { font-size: 13px; font-weight: 620; margin: 0 0 10px 2px; }
+.section-label span { font-weight: 400; color: var(--cp-text-soft); }
+.env { padding: 16px 18px; }
+.env .name { font-weight: 620; font-size: 15px; margin-bottom: 6px; }
+.env dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12.5px; }
+.env dt { color: var(--cp-text-soft); }
+.env dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.env .gid { font-family: Consolas, "Courier New", Courier, monospace; font-size: 11px; color: var(--cp-text-soft); word-break: break-all; margin-top: 8px; }
+
+.scroller { max-height: 420px; overflow-y: auto; }
+.scroller thead th { position: sticky; top: 0; background: var(--cp-surface); z-index: 1; }
+.bars-note { margin-top: 12px; font-size: 12px; color: var(--cp-text-soft); }
+.bars-list { display: flex; flex-direction: column; gap: 10px; }
+.bars-list.scroll { max-height: 300px; overflow-y: auto; padding-right: 6px; }
+.bars-more { margin-top: 12px; }
+.bars-more button { font-size: 12px; padding: 5px 11px; }
+
+.pager { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid var(--cp-border); }
+.pager button { padding: 6px 12px; font-size: 13px; }
+.pager button:disabled { opacity: 0.4; cursor: default; }
+.pager button:disabled:hover { border-color: var(--cp-border); background: var(--cp-surface); }
+.pager .pageinfo { font-size: 13px; color: var(--cp-text-muted); font-variant-numeric: tabular-nums; padding: 0 4px; }
+.pager .pagesize { margin-left: auto; padding: 6px 10px; }
+
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--cp-border); }
+input[type="search"], select {
+  background: var(--cp-bg-elevated);
+  color: var(--cp-text);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 8px 12px;
+  font: inherit; font-size: 13px;
+}
+input[type="search"] { flex: 1 1 240px; min-width: 180px; }
+input[type="search"]:focus, select:focus { outline: 2px solid var(--cp-accent-soft); border-color: var(--cp-accent); }
+.count-note { color: var(--cp-text-muted); font-size: 12.5px; margin-left: auto; }
+
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--cp-text-soft); font-weight: 600; padding: 10px 20px;
+  border-bottom: 1px solid var(--cp-border); cursor: pointer; user-select: none; white-space: nowrap;
+}
+thead th:hover { color: var(--cp-text); }
+thead th .arrow { opacity: 0.45; font-size: 10px; }
+tbody td { padding: 11px 20px; border-bottom: 1px solid var(--cp-border); vertical-align: top; font-size: 13px; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--cp-accent-soft); }
+td .muted { color: var(--cp-text-soft); font-size: 12px; }
+.empty { padding: 32px 20px; text-align: center; color: var(--cp-text-muted); }
+
+.pill {
+  display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px;
+  border: 1px solid var(--cp-border); background: var(--cp-surface-soft); color: var(--cp-text-muted);
+  white-space: nowrap;
+}
+.pill.on { border-color: var(--cp-accent); color: var(--cp-accent); background: var(--cp-accent-soft); }
+.chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip {
+  font-family: Consolas, "Courier New", Courier, monospace; font-size: 11px;
+  padding: 1px 7px; border-radius: 0.625rem;
+  border: 1px solid var(--cp-border); background: var(--cp-surface-soft); color: var(--cp-text-muted);
+}
+footer { margin-top: 24px; color: var(--cp-text-soft); font-size: 12px; }
+footer .lim-title { font-weight: 620; color: var(--cp-text-muted); margin-bottom: 6px; }
+footer ul { margin: 0; padding-left: 18px; }
+footer li { margin-bottom: 3px; }
+footer em { font-style: normal; color: var(--cp-text-muted); }
+
+@media print {
+  html[data-theme] { --cp-bg: #fff; --cp-surface: #fff; --cp-text: #000; }
+  .wrap { max-width: none; padding: 0; }
+  button, .toolbar, .pager, .bars-more, .tabs { display: none !important; }
+  .card { box-shadow: none; break-inside: avoid; }
+  .grid2, .grid3, .grid4, .envs, .kpis { break-inside: avoid; }
+  /* Tabs are hidden with the hidden attribute, so a print needs them back. */
+  [role="tabpanel"][hidden] { display: block !important; }
+  [role="tabpanel"] + [role="tabpanel"] { break-before: page; }
+  footer { break-before: auto; }
+}
+</style>
+</head>
+<body>
+<div class="lock" id="lock" role="dialog" aria-modal="true" aria-labelledby="lockTitle" hidden>
+  <form class="card lock-box" id="lockForm">
+    <h1 id="lockTitle">Power Platform Inventory</h1>
+    <p>This report is encrypted. Enter the passphrase set when it was generated.</p>
+    <input type="password" id="pw" autocomplete="off" placeholder="Passphrase" autofocus />
+    <button class="primary" type="submit" id="unlockBtn">Unlock</button>
+    <div class="lock-err" id="lockErr" role="alert" hidden>That passphrase did not work.</div>
+    <div class="lock-note">Contents are AES-256-GCM encrypted. Nothing is sent anywhere; decryption happens in this browser.</div>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div>
+      <h1>Power Platform Inventory</h1>
+      <div class="sub">
+        Tenant <code id="tenantId"></code> &middot; <span id="account"></span><br>
+        Azure Resource Graph <code>PowerPlatformResources</code> (tenant scope) &middot; generated <span id="genAt"></span>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button class="ghost" id="lockBtn" type="button" hidden>Lock</button>
+    <button class="ghost" id="themeBtn" type="button">Toggle theme</button>
+    <button class="ghost" id="csvBtn" type="button">Download CSV</button>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Report sections">
+    <button role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true">Overview</button>
+    <button role="tab" id="tab-environments" aria-controls="panel-environments" aria-selected="false" tabindex="-1">Environments</button>
+    <button role="tab" id="tab-makers" aria-controls="panel-makers" aria-selected="false" tabindex="-1">Makers</button>
+    <button role="tab" id="tab-connectors" aria-controls="panel-connectors" aria-selected="false" tabindex="-1">Connectors</button>
+    <button role="tab" id="tab-governance" aria-controls="panel-governance" aria-selected="false" tabindex="-1">Governance</button>
+    <button role="tab" id="tab-policy" aria-controls="panel-policy" aria-selected="false" tabindex="-1">Policy</button>
+    <button role="tab" id="tab-risk" aria-controls="panel-risk" aria-selected="false" tabindex="-1">Risk</button>
+    <button role="tab" id="tab-inventory" aria-controls="panel-inventory" aria-selected="false" tabindex="-1">Inventory</button>
+  </nav>
+
+  <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview">
+  <section class="kpis" id="kpis"></section>
+
+  <section class="card">
+    <h2>Adoption trend<span class="hint">resources created per month, last 24 months</span></h2>
+    <div class="body"><svg class="trend" id="trend" preserveAspectRatio="none"></svg></div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <h2>Resources by type<span class="hint">click to filter the inventory</span></h2>
+      <div class="body"><div class="bars" id="byType"></div></div>
+    </div>
+    <div class="card">
+      <h2>Resources by region</h2>
+      <div class="body"><div class="bars" id="byRegion"></div></div>
+    </div>
+  </section>
+  </div>
+
+  <div role="tabpanel" id="panel-environments" aria-labelledby="tab-environments" hidden>
+  <div class="section-label" id="envsLabel" hidden></div>
+  <section class="envs" id="envs"></section>
+  <section class="card" id="envTableCard" hidden>
+    <h2>Environments<span class="hint" id="envTableHint"></span></h2>
+    <div class="toolbar">
+      <input type="search" id="envQ" placeholder="Search environments by name, id, region..." />
+      <select id="envTypeFilter"><option value="">All types</option></select>
+      <button class="ghost" id="envClear" type="button" hidden>Clear filters</button>
+      <span class="count-note" id="envCountNote"></span>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th data-ek="name">Name <span class="arrow"></span></th>
+            <th data-ek="envType">Type <span class="arrow"></span></th>
+            <th data-ek="location">Region <span class="arrow"></span></th>
+            <th data-ek="isManaged">Managed <span class="arrow"></span></th>
+            <th data-ek="resourceCount">Resources <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="envRows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="envEmpty" hidden>No environments match the current filters.</div>
+    <div class="pager" id="envPager"></div>
+  </section>
+
+  <section class="grid3">
+    <div class="card">
+      <h2>Environment types</h2>
+      <div class="body"><div class="donut-wrap" id="envTypeDonut"></div></div>
+    </div>
+    <div class="card">
+      <h2>Managed environments</h2>
+      <div class="body"><div class="donut-wrap" id="envManagedDonut"></div></div>
+    </div>
+    <div class="card">
+      <h2>Environment groups</h2>
+      <div class="body"><div class="donut-wrap" id="envGroupDonut"></div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Resources by environment<span class="hint">click to filter the inventory</span></h2>
+    <div class="body"><div class="bars" id="byEnv"></div></div>
+  </section>
+
+  <section class="card" id="postureCard" hidden>
+    <h2>Environment posture<span class="hint">from the admin APIs, not Resource Graph</span></h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th data-pk="name">Environment <span class="arrow"></span></th>
+            <th data-pk="sku">SKU <span class="arrow"></span></th>
+            <th data-pk="isManaged">Managed <span class="arrow"></span></th>
+            <th data-pk="protection">Protection <span class="arrow"></span></th>
+            <th data-pk="group">Group <span class="arrow"></span></th>
+            <th data-pk="dataverse">Dataverse <span class="arrow"></span></th>
+            <th data-pk="cmk">Key <span class="arrow"></span></th>
+            <th data-pk="dbGb">DB GB <span class="arrow"></span></th>
+            <th data-pk="fileGb">File GB <span class="arrow"></span></th>
+            <th data-pk="policyCount">Policies <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="postureRows"></tbody>
+      </table>
+    </div>
+    <div class="pager" id="posturePager"></div>
+  </section>
+
+  <section class="card" id="capacityCard" hidden>
+    <h2>Dataverse database use by environment<span class="hint">GB consumed, top 15</span></h2>
+    <div class="body"><div class="bars" id="capacityByEnv"></div></div>
+  </section>
+  </div>
+
+  <div role="tabpanel" id="panel-makers" aria-labelledby="tab-makers" hidden>
+  <section class="grid2">
+    <div class="card">
+      <h2>Top makers<span class="hint">by resources created</span></h2>
+      <div class="body"><div class="bars" id="topMakers"></div></div>
+    </div>
+    <div class="card">
+      <h2>Most active editors<span class="hint">by resources last modified</span></h2>
+      <div class="body"><div class="bars" id="topEditors"></div></div>
+    </div>
+    <div class="card">
+      <h2>Maker departments<span class="hint">from Microsoft Entra profiles</span></h2>
+      <div class="body"><div class="bars" id="byDept"></div></div>
+    </div>
+    <div class="card">
+      <h2>Maker countries</h2>
+      <div class="body"><div class="bars" id="byCountry"></div></div>
+    </div>
+  </section>
+  </div>
+
+  <div role="tabpanel" id="panel-connectors" aria-labelledby="tab-connectors" hidden>
+  <section class="grid3">
+    <div class="card">
+      <h2>Connector tier<span class="hint">in use</span></h2>
+      <div class="body"><div class="donut-wrap" id="tierDonut"></div></div>
+    </div>
+    <div class="card">
+      <h2>Connector publisher</h2>
+      <div class="body"><div class="donut-wrap" id="pubDonut"></div></div>
+    </div>
+    <div class="card">
+      <h2>Connector release</h2>
+      <div class="body"><div class="donut-wrap" id="relDonut"></div></div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <h2>Connector usage<span class="hint">distinct resources per connector</span></h2>
+      <div class="body"><div class="bars" id="byConnector"></div></div>
+    </div>
+    <div class="card">
+      <h2>Most used operations<span class="hint">connector actions, not just connectors</span></h2>
+      <div class="body"><div class="bars" id="byOperation"></div></div>
+    </div>
+    <div class="card">
+      <h2>What starts your flows<span class="hint">trigger connector</span></h2>
+      <div class="body"><div class="bars" id="byTrigger"></div></div>
+    </div>
+    <div class="card">
+      <h2>Connectors per resource<span class="hint">complexity spread</span></h2>
+      <div class="body"><div class="bars" id="depth"></div></div>
+    </div>
+  </section>
+  </div>
+
+  <div role="tabpanel" id="panel-governance" aria-labelledby="tab-governance" hidden>
+  <section class="card">
+    <h2>Governance signals<span class="hint">apps, flows and agents unless noted</span></h2>
+    <div class="body"><div class="gov" id="gov"></div></div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <h2>Flow state</h2>
+      <div class="body"><div class="donut-wrap" id="flowStateDonut"></div></div>
+    </div>
+    <div class="card">
+      <h2>Flow trigger types</h2>
+      <div class="body"><div class="donut-wrap" id="flowTriggerDonut"></div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Resource age<span class="hint">since creation</span></h2>
+    <div class="body"><div class="bars" id="ageBuckets"></div></div>
+  </section>
+
+  <section class="card">
+    <h2>Year over year by type<span class="hint">created this year against the same types last year</span></h2>
+    <div class="body"><div class="yoy" id="yoyByType"></div></div>
+  </section>
+  </div>
+
+  <div role="tabpanel" id="panel-policy" aria-labelledby="tab-policy" hidden>
+  <div class="notice" id="deepNotice"></div>
+
+  <section class="kpis" id="policyKpis" hidden></section>
+
+  <section class="card" id="dlpPolicyCard" hidden>
+    <h2>Data policies<span class="hint">how each policy classifies connectors, and where it applies</span></h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Policy</th><th>Applies to</th><th>Business</th><th>Non-business</th>
+            <th>Blocked</th><th>Anything unlisted</th><th>Last changed</th>
+          </tr>
+        </thead>
+        <tbody id="dlpPolicyRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="grid2" id="dlpChartCards" hidden>
+    <div class="card">
+      <h2>What the policies hit<span class="hint">resource and policy pairs</span></h2>
+      <div class="body"><div class="bars" id="dlpVerdicts"></div></div>
+    </div>
+    <div class="card">
+      <h2>Policy coverage<span class="hint">policies applying to each environment</span></h2>
+      <div class="body"><div class="donut-wrap" id="policyMixDonut"></div></div>
+    </div>
+  </section>
+
+  <section class="card" id="dlpFindingCard" hidden>
+    <h2>Policy findings<span class="hint">evaluated against the connectors each resource actually uses</span></h2>
+    <div class="toolbar">
+      <input type="search" id="dlpQ" placeholder="Search name, environment, connector, policy..." />
+      <select id="dlpVerdict"><option value="">All findings</option></select>
+      <span class="count-note" id="dlpCountNote"></span>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th data-dk="name">Resource <span class="arrow"></span></th>
+            <th data-dk="typeLabel">Type <span class="arrow"></span></th>
+            <th data-dk="envName">Environment <span class="arrow"></span></th>
+            <th data-dk="policy">Policy <span class="arrow"></span></th>
+            <th data-dk="verdict">Finding <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="dlpRows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="dlpEmpty" hidden>Nothing matches. No resource breaches a policy under these filters.</div>
+    <div class="pager" id="dlpPager"></div>
+  </section>
+
+  <section class="card" id="tenantSettingCard" hidden>
+    <h2>Tenant settings<span class="hint">only the ones that change who can do what</span></h2>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Setting</th><th>Value</th><th>Meaning</th></tr></thead>
+      <tbody id="tenantSettingRows"></tbody>
+    </table></div>
+  </section>
+
+  <section class="grid3" id="tenantCards" hidden>
+    <div class="card">
+      <h2>Tenant capacity<span class="hint">GB against entitlement</span></h2>
+      <div class="body"><div style="overflow-x:auto"><table>
+        <thead><tr><th>Type</th><th>Used</th><th>Entitled</th><th>Status</th></tr></thead>
+        <tbody id="tenantCapacityRows"></tbody>
+      </table></div></div>
+    </div>
+    <div class="card">
+      <h2>Environment group rules<span class="hint">Managed Environments in bulk</span></h2>
+      <div class="body"><div style="overflow-x:auto"><table>
+        <thead><tr><th>Group</th><th>Rule</th><th>Value</th></tr></thead>
+        <tbody id="groupRuleRows"></tbody>
+      </table></div></div>
+    </div>
+    <div class="card">
+      <h2>Collection status<span class="hint">every admin API tried</span></h2>
+      <div class="body"><div style="overflow-x:auto"><table>
+        <thead><tr><th>Source</th><th>Result</th></tr></thead>
+        <tbody id="deepSourceRows"></tbody>
+      </table></div></div>
+    </div>
+  </section>
+  </div>
+
+  <div role="tabpanel" id="panel-risk" aria-labelledby="tab-risk" hidden>
+  <section class="kpis" id="riskKpis"></section>
+
+  <section class="card">
+    <h2>Archive score<span class="hint">one point per signal, eight possible</span></h2>
+    <div class="body"><div class="bars" id="riskBuckets"></div></div>
+  </section>
+
+  <section class="card" id="riskCard">
+    <h2>Cleanup shortlist<span class="hint">everything scoring at least one point, highest first</span></h2>
+    <div class="toolbar">
+      <input type="search" id="riskQ" placeholder="Search name, environment, reason..." />
+      <select id="riskMin">
+        <option value="1">Score 1 or more</option>
+        <option value="2">Score 2 or more</option>
+        <option value="4" selected>Score 4 or more</option>
+        <option value="6">Score 6 or more</option>
+      </select>
+      <span class="count-note" id="riskCountNote"></span>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th data-rk="archiveScore">Score <span class="arrow"></span></th>
+            <th data-rk="name">Name <span class="arrow"></span></th>
+            <th data-rk="typeLabel">Type <span class="arrow"></span></th>
+            <th data-rk="envName">Environment <span class="arrow"></span></th>
+            <th data-rk="archiveWhy">Why <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="riskRows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="riskEmpty" hidden>Nothing scores that high. Try a lower threshold.</div>
+    <div class="pager" id="riskPager"></div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <h2>Duplicate names<span class="hint">same name, same environment</span></h2>
+      <div class="body"><div class="bars" id="duplicates"></div></div>
+    </div>
+    <div class="card">
+      <h2>Non-production naming<span class="hint">word found in the resource name</span></h2>
+      <div class="body"><div class="bars" id="namingHits"></div></div>
+    </div>
+    <div class="card">
+      <h2>Makers spanning environments<span class="hint">environments each maker builds in</span></h2>
+      <div class="body"><div class="bars" id="makerSprawl"></div></div>
+    </div>
+    <div class="card">
+      <h2>How the score works</h2>
+      <div class="body"><ul class="score-help">
+        <li>Never modified after creation</li>
+        <li>Non-production name (test, demo, copy, temp and similar)</li>
+        <li>Over a year old</li>
+        <li>Untouched over 180 days</li>
+        <li>No connectors detected</li>
+        <li>Quarantined, or a flow that is not activated</li>
+        <li>Owner missing from the directory, or no owner recorded</li>
+        <li>Duplicate name in the same environment</li>
+      </ul></div>
+    </div>
+  </section>
+  </div>
+
+  <div role="tabpanel" id="panel-inventory" aria-labelledby="tab-inventory" hidden>
+  <section class="card" id="resourcesCard">
+    <h2>All resources</h2>
+    <div class="toolbar">
+      <input type="search" id="q" placeholder="Search name, id, environment, connector..." />
+      <select id="typeFilter"><option value="">All types</option></select>
+      <select id="envFilter"><option value="">All environments</option></select>
+      <button class="ghost" id="clearFilters" type="button" hidden>Clear filters</button>
+      <span class="count-note" id="countNote"></span>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th data-k="name">Name <span class="arrow"></span></th>
+            <th data-k="typeLabel">Type <span class="arrow"></span></th>
+            <th data-k="envName">Environment <span class="arrow"></span></th>
+            <th data-k="location">Region <span class="arrow"></span></th>
+            <th data-k="createdAt">Created <span class="arrow"></span></th>
+            <th data-k="archiveScore">Score <span class="arrow"></span></th>
+            <th data-k="connectorCount">Connectors <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="emptyMsg" hidden>No resources match the current filters.</div>
+    <div class="pager" id="resPager"></div>
+  </section>
+  </div>
+
+  <footer>
+    <div class="lim-title">Known limits</div>
+    <ul>
+      <li>Snapshot, not live. Inventory reflects changes within about 15 minutes of them happening.</li>
+      <li>Only <em>published</em> model-driven apps appear. The default environment's three preinstalled apps stay hidden until edited and republished.</li>
+      <li>Flow owner shows the creator and does not follow ownership transfers. Agents report no modified-on or modified-by.</li>
+      <li>Classic chatbots are excluded. Microsoft 365 Copilot workflow agent flows carry no environment.</li>
+      <li>Connector inventory is in preview, and counts distinct connectors rather than connection instances.</li>
+      <li>Unavailable in GCC, GCC High, DoD, 21Vianet and air-gapped clouds.</li>
+    </ul>
+  </footer>
+</div>
+
+<script>
+const PAYLOAD = "__PPDATA__";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtDate = (s) => (s ? String(s).slice(0, 10) : "");
+// PowerShell's ConvertTo-Json emits a single-element array as a bare object.
+const arr = (x) => (Array.isArray(x) ? x : x == null ? [] : [x]);
+
+const b64ToBytes = (b) => Uint8Array.from(atob(b), (ch) => ch.charCodeAt(0));
+
+async function decryptPayload(env, passphrase) {
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey("raw", enc.encode(passphrase), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64ToBytes(env.salt), iterations: env.iterations, hash: "SHA-256" },
+    base,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"]
+  );
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64ToBytes(env.iv) }, key, b64ToBytes(env.ct));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+function boot() {
+  if (!PAYLOAD || !PAYLOAD.encrypted) { start(PAYLOAD); return; }
+
+  $("lock").hidden = false;
+  if (!window.crypto || !crypto.subtle) {
+    $("lockErr").hidden = false;
+    $("lockErr").textContent = "This browser cannot decrypt the report. Open the file locally rather than from a network share.";
+    return;
+  }
+
+  $("lockForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const btn = $("unlockBtn");
+    $("lockErr").hidden = true;
+    btn.disabled = true;
+    btn.textContent = "Unlocking...";
+    try {
+      const data = await decryptPayload(PAYLOAD, $("pw").value);
+      $("lock").remove();
+      start(data);
+    } catch {
+      // AES-GCM authentication failure: wrong passphrase or tampered file.
+      $("lockErr").hidden = false;
+      $("pw").value = "";
+      $("pw").focus();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Unlock";
+    }
+  });
+}
+
+function start(DATA) {
+$("app").hidden = false;
+
+// Decrypted data only ever lives in memory; reloading discards it.
+const WAS_ENCRYPTED = !!(PAYLOAD && PAYLOAD.encrypted);
+if (WAS_ENCRYPTED) {
+  const IDLE_MINUTES = 15;
+  let idle;
+  const resetIdle = () => {
+    clearTimeout(idle);
+    idle = setTimeout(() => location.reload(), IDLE_MINUTES * 60000);
+  };
+  ["mousemove", "keydown", "click", "scroll"].forEach((e) => addEventListener(e, resetIdle, { passive: true }));
+  resetIdle();
+
+  const lockBtn = $("lockBtn");
+  lockBtn.hidden = false;
+  lockBtn.title = `Discards the decrypted data. Happens automatically after ${IDLE_MINUTES} minutes idle.`;
+  lockBtn.addEventListener("click", () => location.reload());
+}
+
+const ENVS = arr(DATA.environments);
+const RESOURCES = arr(DATA.resources);
+
+// ---- header ----
+$("tenantId").textContent = DATA.tenant.id;
+$("account").textContent = DATA.tenant.account;
+$("genAt").textContent = DATA.tenant.generatedAt;
+
+// ---- KPIs ----
+const c = DATA.counts;
+const g = DATA.growth || {};
+const delta = (pct, suffix) =>
+  pct === null || pct === undefined ? "" : `<div class="d ${pct > 0 ? "up" : pct < 0 ? "down" : ""}">${pct > 0 ? "\u2191" : pct < 0 ? "\u2193" : ""} ${Math.abs(pct)}% ${suffix}</div>`;
+
+const kpis = [
+  { n: c.environments, l: "Environments", s: `${c.managedEnvs} under Managed Environments`, accent: true },
+  { n: c.apps, l: "Apps", s: "canvas, model-driven, code and App Builder" },
+  { n: c.flows, l: "Flows", s: "cloud, agent and workflow agent flows" },
+  { n: c.agents, l: "Agents", s: "Copilot Studio and Microsoft 365 Agent Builder" },
+  { n: c.makers, l: "Makers", s: "distinct people who created something" },
+  { n: c.createdThisMonth, l: "Created this month", s: `${g.lastMonth ?? 0} in the month before`, accent: true, d: delta(g.monthPct, "vs last month") },
+  { n: c.connectorsInUse, l: "Connectors in use", s: `of ${(c.connectorCatalog ?? 0).toLocaleString()} available in the tenant` },
+  { n: `${c.premiumPct ?? 0}%`, l: "Premium reliance", s: `of ${c.appsAndFlows ?? 0} apps and flows use a premium connector`, accent: true },
+];
+const kpiCard = (k) =>
+  `<div class="card kpi${k.accent ? " accent" : ""}"><div class="n">${esc(k.n)}</div><div class="l">${esc(k.l)}</div><div class="s">${esc(k.s)}</div>${k.d ?? ""}</div>`;
+
+$("kpis").innerHTML = kpis.map(kpiCard).join("");
+
+// ---- environment cards ----
+// ---- environments: tiles always lead, table follows when there are many ----
+const ENV_CARD_LIMIT = 12; // tile every environment up to this many
+const ENV_TILE_TOP = 8;    // past that, tile the busiest few and table the rest
+
+const envCard = (e) => `<div class="card env">
+    <div class="name">${esc(e.name)}</div>
+    <dl>
+      <dt>Type</dt><dd>${esc(e.envType || "-")}</dd>
+      <dt>Region</dt><dd>${esc(e.location)}</dd>
+      <dt>Managed</dt><dd>${e.isManaged ? "Yes" : "No"}</dd>
+      <dt>Resources</dt><dd>${e.resourceCount}</dd>
+      <dt>Created</dt><dd>${esc(fmtDate(e.createdAt))}</dd>
+    </dl>
+    <div class="gid">${esc(e.id)}</div>
+  </div>`;
+
+const manyEnvs = ENVS.length > ENV_CARD_LIMIT;
+const tileCount = manyEnvs ? ENV_TILE_TOP : ENVS.length;
+
+$("envs").innerHTML = ENVS.slice(0, tileCount).map(envCard).join("");
+
+if (manyEnvs) {
+  $("envsLabel").hidden = false;
+  $("envsLabel").innerHTML = `Busiest environments <span>&middot; top ${tileCount} of ${ENVS.length}</span>`;
+
+  $("envTableCard").hidden = false;
+  $("envTableHint").textContent = `all ${ENVS.length}`;
+
+  [...new Set(ENVS.map((e) => e.envType).filter(Boolean))].sort().forEach((t) => {
+    $("envTypeFilter").insertAdjacentHTML("beforeend", `<option value="${esc(t)}">${esc(t)}</option>`);
+  });
+
+  let envSortKey = "resourceCount";
+  let envSortAsc = false;
+  const envPager = createPager($("envPager"), () => renderEnvs());
+
+  function renderEnvs() {
+    const q = $("envQ").value.trim().toLowerCase();
+    const t = $("envTypeFilter").value;
+
+    const list = ENVS
+      .filter((e) => {
+        if (t && e.envType !== t) return false;
+        if (!q) return true;
+        return [e.name, e.id, e.location, e.envType].join(" ").toLowerCase().includes(q);
+      })
+      .sort((a, b) => {
+        const x = a[envSortKey], y = b[envSortKey];
+        const cmp = typeof x === "number" && typeof y === "number"
+          ? x - y
+          : String(x ?? "").localeCompare(String(y ?? ""), undefined, { numeric: true });
+        return envSortAsc ? cmp : -cmp;
+      });
+
+    const page = envPager.slice(list);
+    $("envCountNote").textContent = `${list.length} of ${ENVS.length} environments`;
+    $("envEmpty").hidden = list.length > 0;
+    $("envClear").hidden = !q && !t;
+
+    $("envRows").innerHTML = page
+      .map(
+        (e) => `<tr>
+          <td><div>${esc(e.name)}</div><div class="muted">${esc(e.id)}</div></td>
+          <td><span class="pill">${esc(e.envType || "-")}</span></td>
+          <td>${esc(e.location)}</td>
+          <td>${e.isManaged ? "Yes" : "No"}</td>
+          <td>${e.resourceCount}</td>
+        </tr>`
+      )
+      .join("");
+
+    document.querySelectorAll("thead th[data-ek]").forEach((th) => {
+      th.querySelector(".arrow").textContent = th.dataset.ek === envSortKey ? (envSortAsc ? "\u25B2" : "\u25BC") : "";
+    });
+  }
+
+  document.querySelectorAll("thead th[data-ek]").forEach((th) => {
+    th.addEventListener("click", () => {
+      const k = th.dataset.ek;
+      if (k === envSortKey) envSortAsc = !envSortAsc;
+      else { envSortKey = k; envSortAsc = true; }
+      envPager.reset();
+      renderEnvs();
+    });
+  });
+
+  let envDebounce;
+  $("envQ").addEventListener("input", () => {
+    clearTimeout(envDebounce);
+    envDebounce = setTimeout(() => { envPager.reset(); renderEnvs(); }, 150);
+  });
+  $("envTypeFilter").addEventListener("input", () => { envPager.reset(); renderEnvs(); });
+  $("envClear").addEventListener("click", () => {
+    $("envQ").value = "";
+    $("envTypeFilter").value = "";
+    envPager.reset();
+    renderEnvs();
+  });
+
+  renderEnvs();
+}
+
+// ---- bar charts ----
+// ---- reusable paginator ----
+function createPager(el, onChange, sizes = [25, 50, 100, 250], defaultSize = 50) {
+  let page = 1, pageSize = defaultSize, total = 0;
+  const pages = () => Math.max(1, Math.ceil(total / pageSize));
+
+  el.innerHTML =
+    `<button class="ghost" data-act="first" title="First page">\u00AB</button>` +
+    `<button class="ghost" data-act="prev">Prev</button>` +
+    `<span class="pageinfo"></span>` +
+    `<button class="ghost" data-act="next">Next</button>` +
+    `<button class="ghost" data-act="last" title="Last page">\u00BB</button>` +
+    `<select class="pagesize">${sizes.map((s) => `<option value="${s}"${s === defaultSize ? " selected" : ""}>${s} per page</option>`).join("")}</select>`;
+
+  const info = el.querySelector(".pageinfo");
+
+  function sync() {
+    page = Math.min(Math.max(1, page), pages());
+    const from = total ? (page - 1) * pageSize + 1 : 0;
+    const to = Math.min(page * pageSize, total);
+    info.textContent = total ? `${from}-${to} of ${total}  \u00B7  page ${page} of ${pages()}` : "No results";
+    el.querySelectorAll("button").forEach((b) => {
+      const a = b.dataset.act;
+      b.disabled = a === "first" || a === "prev" ? page === 1 : page === pages();
+    });
+    el.hidden = pages() <= 1;
+  }
+
+  el.addEventListener("click", (ev) => {
+    const b = ev.target.closest("button[data-act]");
+    if (!b || b.disabled) return;
+    ({ first: () => (page = 1), prev: () => page--, next: () => page++, last: () => (page = pages()) })[b.dataset.act]();
+    onChange();
+  });
+  el.querySelector(".pagesize").addEventListener("change", (ev) => {
+    pageSize = +ev.target.value;
+    page = 1;
+    onChange();
+  });
+
+  return {
+    slice(list) { total = list.length; sync(); const s = (page - 1) * pageSize; return list.slice(s, s + pageSize); },
+    reset() { page = 1; },
+  };
+}
+
+// ---- bar charts ----
+function bars(el, items, limit = 10, filterKey = null) {
+  let expanded = false;
+  items = arr(items);
+
+  function draw() {
+    if (!items.length) { el.innerHTML = `<div class="muted">No data.</div>`; return; }
+    const list = expanded ? items : items.slice(0, limit);
+    const max = Math.max(1, ...list.map((i) => i.count));
+
+    const rowsHtml = list
+      .map(
+        (i) => `<div class="bar-row${filterKey ? " clickable" : ""}" title="${filterKey ? "Filter the table by " : ""}${esc(i.key)}" data-key="${esc(i.key)}">
+          <div class="lbl">${esc(i.key)}</div>
+          <div class="bar-track">${i.count > 0 ? `<div class="bar-fill" style="width:${(i.count / max) * 100}%"></div>` : ""}</div>
+          <div class="val">${i.count}</div>
+        </div>`
+      )
+      .join("");
+
+    el.innerHTML = `<div class="bars-list${expanded ? " scroll" : ""}">${rowsHtml}</div>`;
+
+    // Never hide the tail silently.
+    const hidden = items.length - list.length;
+    if (hidden > 0) {
+      const rest = items.slice(limit).reduce((s, i) => s + i.count, 0);
+      el.insertAdjacentHTML("beforeend", `<div class="bars-note">+ ${hidden} more (${rest} resources) not shown</div>`);
+    }
+    if (items.length > limit) {
+      el.insertAdjacentHTML(
+        "beforeend",
+        `<div class="bars-more"><button class="ghost" type="button">${expanded ? `Show top ${limit}` : `Show all ${items.length}`}</button></div>`
+      );
+      el.querySelector(".bars-more button").addEventListener("click", () => { expanded = !expanded; draw(); });
+    }
+
+    if (filterKey) {
+      el.querySelectorAll(".bar-row").forEach((row) => {
+        row.addEventListener("click", () => applyChartFilter(filterKey, row.dataset.key));
+      });
+    }
+  }
+
+  draw();
+}
+
+// Clicking a chart drives the resource table, the way a Power BI page cross-filters.
+function applyChartFilter(which, value) {
+  const sel = which === "type" ? $("typeFilter") : $("envFilter");
+  sel.value = [...sel.options].some((o) => o.value === value) ? value : "";
+  $("q").value = "";
+  resPager.reset();
+  render();
+  showTab("tab-inventory");
+  $("resourcesCard").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+bars($("byType"), DATA.byType, 10, "type");
+bars($("byRegion"), DATA.byRegion);
+bars($("byEnv"), DATA.byEnvironment, 10, "env");
+bars($("byConnector"), DATA.connectorUsage, 12);
+bars($("topMakers"), DATA.topMakers);
+bars($("topEditors"), DATA.topEditors);
+bars($("byDept"), DATA.byDepartment);
+bars($("byCountry"), DATA.byCountry);
+bars($("byTrigger"), DATA.byTrigger);
+bars($("byOperation"), DATA.byOperation, 12);
+bars($("ageBuckets"), DATA.ageBuckets, 10);
+bars($("depth"), DATA.connectorDepth, 10);
+
+// ---- adoption trend ----
+(function trend() {
+  const items = arr(DATA.trend);
+  const el = $("trend");
+  if (!items.length) { el.outerHTML = `<div class="muted">No data.</div>`; return; }
+
+  const W = 1000, H = 150, pad = { l: 4, r: 4, t: 8, b: 20 };
+  const max = Math.max(1, ...items.map((i) => i.count));
+  const bw = (W - pad.l - pad.r) / items.length;
+  const plotH = H - pad.t - pad.b;
+
+  const cols = items
+    .map((i, n) => {
+      const h = (i.count / max) * plotH;
+      const x = pad.l + n * bw;
+      return `<rect x="${(x + bw * 0.15).toFixed(1)}" y="${(pad.t + plotH - h).toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${Math.max(h, i.count ? 1.5 : 0).toFixed(1)}" rx="2"><title>${esc(i.key)}: ${i.count}</title></rect>`;
+    })
+    .join("");
+
+  // Label every third month so the axis stays readable at 24 buckets.
+  const labels = items
+    .map((i, n) => (n % 3 === 0 ? `<text class="axis" x="${(pad.l + n * bw + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${i.key.slice(2)}</text>` : ""))
+    .join("");
+
+  el.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  el.innerHTML = `<line class="grid" x1="0" y1="${pad.t + plotH}" x2="${W}" y2="${pad.t + plotH}" />${cols}${labels}`;
+})();
+
+// ---- donuts ----
+function donut(el, items, centreLabel) {
+  const list = arr(items).filter((i) => i.count > 0);
+  const total = list.reduce((s, i) => s + i.count, 0);
+  if (!total) { el.innerHTML = `<div class="muted">No data.</div>`; return; }
+
+  const R = 52, SW = 16, C = 2 * Math.PI * R;
+  let offset = 0;
+
+  const segs = list
+    .map((i, n) => {
+      const len = (i.count / total) * C;
+      const s = `<circle r="${R}" cx="70" cy="70" fill="none" stroke="var(--cp-c${(n % 6) + 1})" stroke-width="${SW}"
+        stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"
+        transform="rotate(-90 70 70)"><title>${esc(i.key)}: ${i.count}</title></circle>`;
+      offset += len;
+      return s;
+    })
+    .join("");
+
+  const legend = list
+    .map((i, n) => `<div title="${esc(i.key)}">
+        <span class="sw" style="background:var(--cp-c${(n % 6) + 1})"></span>
+        <span class="lk">${esc(i.key)}</span>
+        <span class="lv">${i.count}</span>
+      </div>`)
+    .join("");
+
+  el.innerHTML =
+    `<svg class="donut" width="140" height="140" viewBox="0 0 140 140">${segs}` +
+    `<text class="hole-n" x="70" y="70">${total}</text>` +
+    `<text class="hole-l" x="70" y="86">${esc(centreLabel)}</text></svg>` +
+    `<div class="legend">${legend}</div>`;
+}
+
+donut($("envTypeDonut"), DATA.byEnvType, "envs");
+donut($("envManagedDonut"), DATA.byEnvManaged, "envs");
+donut($("envGroupDonut"), DATA.byEnvGrouped, "envs");
+donut($("tierDonut"), DATA.connectorTier, "connectors");
+donut($("pubDonut"), DATA.connectorPub, "connectors");
+donut($("relDonut"), DATA.connectorRel, "connectors");
+donut($("flowStateDonut"), DATA.flowState, "flows");
+donut($("flowTriggerDonut"), DATA.flowTrigger, "flows");
+
+// ---- governance signals ----
+$("gov").innerHTML = arr(DATA.hygiene)
+  .map(
+    (h) => `<div class="gov-row">
+      <div class="gov-n${h.count > 0 ? " hit" : ""}">${h.count}</div>
+      <div><div class="gov-k">${esc(h.key)}</div><div class="gov-h">${esc(h.hint)}</div></div>
+    </div>`
+  )
+  .join("");
+
+// ---- year over year by type ----
+(function yoy() {
+  const items = arr(DATA.yoyByType);
+  const prevLabel = (DATA.growth || {}).lastYearLabel ?? "last year";
+  if (!items.length) { $("yoyByType").innerHTML = `<div class="muted">No data.</div>`; return; }
+  $("yoyByType").innerHTML = items
+    .map((y) => {
+      const d = y.pct === null || y.pct === undefined
+        ? "no baseline"
+        : `${y.pct > 0 ? "\u2191" : y.pct < 0 ? "\u2193" : ""} ${Math.abs(y.pct)}%`;
+      return `<div class="yoy-row">
+        <div><div class="yoy-k">${esc(y.key)}</div><div class="yoy-h">${y.prev} in ${esc(prevLabel)} &middot; ${esc(d)}</div></div>
+        <div class="yoy-v">${y.count}</div>
+      </div>`;
+    })
+    .join("");
+})();
+
+// ---- risk ----
+const scorePill = (s) =>
+  `<span class="score ${s >= 6 ? "s6" : s >= 4 ? "s4" : s >= 2 ? "s2" : ""}">${s ?? 0}</span>`;
+
+$("riskKpis").innerHTML = [
+  { n: c.atRisk ?? 0, l: "High archive risk", s: "scoring 4 or more of a possible 8", accent: true },
+  { n: c.clean ?? 0, l: "Clean", s: "no archive signals at all" },
+  { n: c.duplicated ?? 0, l: "Duplicate names", s: "same name twice in one environment" },
+  { n: c.nonProdNamed ?? 0, l: "Non-production names", s: "test, demo, copy and similar" },
+].map(kpiCard).join("");
+
+bars($("riskBuckets"), DATA.riskBuckets, 10);
+bars($("duplicates"), DATA.duplicates, 10);
+bars($("namingHits"), DATA.namingHits, 10);
+bars($("makerSprawl"), DATA.makerSprawl, 10);
+
+const RISKY = RESOURCES.filter((r) => (r.archiveScore ?? 0) >= 1);
+let riskSortKey = "archiveScore";
+let riskSortAsc = false;
+const riskPager = createPager($("riskPager"), () => renderRisk());
+
+function renderRisk() {
+  const q = $("riskQ").value.trim().toLowerCase();
+  const min = Number($("riskMin").value);
+
+  const list = RISKY.filter((r) => {
+    if ((r.archiveScore ?? 0) < min) return false;
+    if (!q) return true;
+    return [r.name, r.typeLabel, r.envName, r.archiveWhy].join(" ").toLowerCase().includes(q);
+  }).sort((a, b) => {
+    const x = a[riskSortKey], y = b[riskSortKey];
+    const cmp = typeof x === "number" && typeof y === "number"
+      ? x - y
+      : String(x ?? "").localeCompare(String(y ?? ""), undefined, { numeric: true });
+    return riskSortAsc ? cmp : -cmp;
+  });
+
+  const page = riskPager.slice(list);
+  $("riskCountNote").textContent = `${list.length} of ${RISKY.length} scored resources`;
+  $("riskEmpty").hidden = list.length > 0;
+
+  $("riskRows").innerHTML = page
+    .map(
+      (r) => `<tr>
+        <td>${scorePill(r.archiveScore)}</td>
+        <td><div>${esc(r.name)}</div><div class="muted">${esc(r.id)}</div></td>
+        <td><span class="pill">${esc(r.typeLabel)}</span></td>
+        <td>${esc(r.envName || "-")}</td>
+        <td class="muted">${esc(r.archiveWhy)}</td>
+      </tr>`
+    )
+    .join("");
+
+  document.querySelectorAll("thead th[data-rk]").forEach((th) => {
+    th.querySelector(".arrow").textContent = th.dataset.rk === riskSortKey ? (riskSortAsc ? "\u25B2" : "\u25BC") : "";
+  });
+}
+
+document.querySelectorAll("thead th[data-rk]").forEach((th) => {
+  th.addEventListener("click", () => {
+    const k = th.dataset.rk;
+    if (k === riskSortKey) riskSortAsc = !riskSortAsc;
+    else { riskSortKey = k; riskSortAsc = k !== "archiveScore"; }
+    riskPager.reset();
+    renderRisk();
+  });
+});
+
+["riskQ", "riskMin"].forEach((id) =>
+  $(id).addEventListener("input", () => { riskPager.reset(); renderRisk(); })
+);
+renderRisk();
+
+// ---- environment posture (admin APIs) ----
+(function posture() {
+  const rows = arr(DATA.envPosture).filter((e) => e.sku || e.dbGb != null || e.policyCount);
+  if (!rows.length) return;
+
+  $("postureCard").hidden = false;
+  let key = "dbGb", asc = false;
+  const pager = createPager($("posturePager"), () => draw());
+
+  function draw() {
+    const list = [...rows].sort((a, b) => {
+      const x = a[key], y = b[key];
+      const cmp = typeof x === "number" && typeof y === "number"
+        ? x - y
+        : String(x ?? "").localeCompare(String(y ?? ""), undefined, { numeric: true });
+      return asc ? cmp : -cmp;
+    });
+    $("postureRows").innerHTML = pager.slice(list)
+      .map(
+        (e) => `<tr>
+          <td><div>${esc(e.name)}</div><div class="muted">${esc(e.envType || "")}</div></td>
+          <td>${esc(e.sku || "-")}</td>
+          <td>${e.isManaged ? "Yes" : `<span class="flag">No</span>`}</td>
+          <td>${esc(e.protection || "-")}</td>
+          <td>${esc(e.group || "-")}</td>
+          <td>${e.dataverse ? "Yes" : "No"}</td>
+          <td>${esc(e.cmk || "-")}</td>
+          <td>${e.dbGb ?? "-"}</td>
+          <td>${e.fileGb ?? "-"}</td>
+          <td>${e.policyCount ? e.policyCount : `<span class="flag">0</span>`}</td>
+        </tr>`
+      )
+      .join("");
+    document.querySelectorAll("thead th[data-pk]").forEach((th) => {
+      th.querySelector(".arrow").textContent = th.dataset.pk === key ? (asc ? "\u25B2" : "\u25BC") : "";
+    });
+  }
+
+  document.querySelectorAll("thead th[data-pk]").forEach((th) => {
+    th.addEventListener("click", () => {
+      if (th.dataset.pk === key) asc = !asc;
+      else { key = th.dataset.pk; asc = true; }
+      pager.reset();
+      draw();
+    });
+  });
+  draw();
+
+  if (arr(DATA.capacityByEnv).length) {
+    $("capacityCard").hidden = false;
+    bars($("capacityByEnv"), DATA.capacityByEnv, 15);
+  }
+})();
+
+// ---- policy ----
+(function policy() {
+  const deep = DATA.deep || {};
+  const sources = arr(deep.sources);
+
+  if (!deep.requested) {
+    $("deepNotice").innerHTML =
+      `Admin API data was not collected for this report. Re-run the export with <code>-Deep</code> to add ` +
+      `data policies and their impact, environment posture, capacity, tenant settings and environment group rules.`;
+    return;
+  }
+
+  const failed = sources.filter((s) => !String(s.value).startsWith("ok"));
+  $("deepNotice").innerHTML = failed.length
+    ? `<span class="flag">${failed.length} of ${sources.length}</span> admin API sources could not be read, so parts of ` +
+      `this tab are missing rather than empty. See <strong>Collection status</strong> below for the reason.`
+    : `Collected from the Power Platform admin APIs when this report was generated.`;
+
+  $("deepSourceRows").innerHTML = sources
+    .map((s) => `<tr><td>${esc(s.key)}</td><td class="${String(s.value).startsWith("ok") ? "muted" : "flag"}">${esc(s.value)}</td></tr>`)
+    .join("");
+
+  const fill = (id, items, render, empty) => {
+    $(id).innerHTML = arr(items).length ? arr(items).map(render).join("") : empty;
+  };
+  fill("tenantSettingRows", DATA.tenantSettings,
+    (t) => `<tr><td>${esc(t.key)}</td><td class="${t.concern ? "flag" : ""}">${esc(t.value)}</td><td class="muted">${esc(t.hint)}</td></tr>`,
+    `<tr><td colspan="3" class="muted">Not collected.</td></tr>`);
+  fill("tenantCapacityRows", DATA.tenantCapacity,
+    (c) => `<tr><td>${esc(c.key)}</td><td>${esc(c.actual ?? "-")}</td><td>${esc(c.entitled ?? "-")}</td><td class="${c.status && c.status !== "Normal" ? "flag" : "muted"}">${esc(c.status || "-")}</td></tr>`,
+    `<tr><td colspan="4" class="muted">Not collected.</td></tr>`);
+  fill("groupRuleRows", DATA.groupRules,
+    (g) => `<tr><td>${esc(g.group)}</td><td>${esc(g.rule)}</td><td class="muted">${esc(g.value)}</td></tr>`,
+    `<tr><td colspan="3" class="muted">No environment group rules found.</td></tr>`);
+  $("tenantCards").hidden = false;
+  $("tenantSettingCard").hidden = false;
+
+  const policies = arr(DATA.dlpPolicyList);
+  if (!deep.dlp) return;
+
+  $("policyKpis").innerHTML = [
+    { n: c.dlpPolicies ?? 0, l: "Data policies", s: "in force across the tenant", accent: c.dlpPolicies === 0 },
+    { n: c.envNoPolicy ?? 0, l: "Environments with no policy", s: "nothing restricts connectors there", accent: c.envNoPolicy > 0 },
+    { n: c.dlpBlocked ?? 0, l: "Blocked connector in use", s: "already broken, or breaks on next save", accent: c.dlpBlocked > 0 },
+    { n: c.dlpCross ?? 0, l: "Cross data groups", s: "business and non-business in one resource", accent: c.dlpCross > 0 },
+  ].map(kpiCard).join("");
+  $("policyKpis").hidden = false;
+
+  if (!policies.length) {
+    $("deepNotice").innerHTML =
+      `<span class="flag">This tenant has no data policies at all.</span> Every connector, including premium and ` +
+      `third-party ones, can be used in every environment and combined freely with any other.`;
+    $("dlpPolicyRows").innerHTML =
+      `<tr><td colspan="7" class="muted">None defined. Nothing to evaluate resources against.</td></tr>`;
+    $("dlpPolicyCard").hidden = false;
+    return;
+  }
+
+  const scopeLabel = (p) =>
+    p.scope === "AllEnvironments" ? "Every environment"
+      : p.scope === "OnlyEnvironments" ? `${p.envCount} named environment${p.envCount === 1 ? "" : "s"}`
+      : p.scope === "ExceptEnvironments" ? `Everything except ${p.envCount}`
+      : p.scope || "-";
+
+  $("dlpPolicyRows").innerHTML = policies
+    .map(
+      (p) => `<tr>
+        <td>${esc(p.name)}</td>
+        <td>${esc(scopeLabel(p))}</td>
+        <td>${p.business}</td>
+        <td>${p.nonBusiness}</td>
+        <td>${p.blocked}</td>
+        <td class="muted">${esc(p.default)}</td>
+        <td>${esc(fmtDate(p.modified))}</td>
+      </tr>`
+    )
+    .join("");
+  $("dlpPolicyCard").hidden = false;
+
+  bars($("dlpVerdicts"), DATA.dlpVerdicts, 10);
+  donut($("policyMixDonut"), DATA.envPolicyMix, "envs");
+  $("dlpChartCards").hidden = false;
+
+  const FIND = arr(DATA.dlpFindings);
+  if (!FIND.length) return;
+
+  [...new Set(FIND.map((f) => f.verdict))].sort().forEach((v) => {
+    $("dlpVerdict").insertAdjacentHTML("beforeend", `<option value="${esc(v)}">${esc(v)}</option>`);
+  });
+
+  let dlpKey = "verdict", dlpAsc = true;
+  const dlpPager = createPager($("dlpPager"), () => renderDlp());
+
+  function renderDlp() {
+    const q = $("dlpQ").value.trim().toLowerCase();
+    const v = $("dlpVerdict").value;
+    const list = FIND.filter((f) => {
+      if (v && f.verdict !== v) return false;
+      if (!q) return true;
+      return [f.name, f.typeLabel, f.envName, f.policy, f.detail].join(" ").toLowerCase().includes(q);
+    }).sort((a, b) => {
+      const cmp = String(a[dlpKey] ?? "").localeCompare(String(b[dlpKey] ?? ""), undefined, { numeric: true });
+      return dlpAsc ? cmp : -cmp;
+    });
+
+    const page = dlpPager.slice(list);
+    $("dlpCountNote").textContent = `${list.length} of ${FIND.length} findings`;
+    $("dlpEmpty").hidden = list.length > 0;
+
+    $("dlpRows").innerHTML = page
+      .map(
+        (f) => `<tr>
+          <td>${esc(f.name)}</td>
+          <td><span class="pill">${esc(f.typeLabel)}</span></td>
+          <td>${esc(f.envName || "-")}</td>
+          <td>${esc(f.policy)}</td>
+          <td><div class="${f.verdict.startsWith("Uses") ? "flag" : ""}">${esc(f.verdict)}</div><div class="muted">${esc(f.detail)}</div></td>
+        </tr>`
+      )
+      .join("");
+
+    document.querySelectorAll("thead th[data-dk]").forEach((th) => {
+      th.querySelector(".arrow").textContent = th.dataset.dk === dlpKey ? (dlpAsc ? "\u25B2" : "\u25BC") : "";
+    });
+  }
+
+  document.querySelectorAll("thead th[data-dk]").forEach((th) => {
+    th.addEventListener("click", () => {
+      if (th.dataset.dk === dlpKey) dlpAsc = !dlpAsc;
+      else { dlpKey = th.dataset.dk; dlpAsc = true; }
+      dlpPager.reset();
+      renderDlp();
+    });
+  });
+  ["dlpQ", "dlpVerdict"].forEach((id) =>
+    $(id).addEventListener("input", () => { dlpPager.reset(); renderDlp(); })
+  );
+
+  renderDlp();
+  $("dlpFindingCard").hidden = false;
+})();
+
+// ---- table ----
+const rows = RESOURCES.map((r) => ({ ...r, connectorCount: arr(r.connectors).length }));
+
+[...new Set(rows.map((r) => r.typeLabel))].sort().forEach((t) => {
+  $("typeFilter").insertAdjacentHTML("beforeend", `<option value="${esc(t)}">${esc(t)}</option>`);
+});
+[...new Set(rows.map((r) => r.envName).filter(Boolean))].sort().forEach((e) => {
+  $("envFilter").insertAdjacentHTML("beforeend", `<option value="${esc(e)}">${esc(e)}</option>`);
+});
+
+let sortKey = "typeLabel";
+let sortAsc = true;
+const resPager = createPager($("resPager"), () => render());
+
+function visible() {
+  const q = $("q").value.trim().toLowerCase();
+  const t = $("typeFilter").value;
+  const e = $("envFilter").value;
+  return rows.filter((r) => {
+    if (t && r.typeLabel !== t) return false;
+    if (e && r.envName !== e) return false;
+    if (!q) return true;
+    return [r.name, r.id, r.envName, r.typeLabel, r.location, arr(r.connectors).join(" ")]
+      .join(" ").toLowerCase().includes(q);
+  });
+}
+
+function render() {
+  const list = visible().sort((a, b) => {
+    const x = a[sortKey], y = b[sortKey];
+    const cmp = typeof x === "number" && typeof y === "number"
+      ? x - y
+      : String(x ?? "").localeCompare(String(y ?? ""), undefined, { numeric: true });
+    return sortAsc ? cmp : -cmp;
+  });
+
+  const page = resPager.slice(list);
+  $("countNote").textContent = `${list.length} of ${rows.length} resources`;
+  $("emptyMsg").hidden = list.length > 0;
+  $("clearFilters").hidden = !$("q").value.trim() && !$("typeFilter").value && !$("envFilter").value;
+
+  $("rows").innerHTML = page
+    .map((r) => {
+      const chips = arr(r.connectors).length
+        ? `<div class="chips">${arr(r.connectors).map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div>`
+        : `<span class="muted">-</span>`;
+      const extra = r.status ? ` <span class="pill on">${esc(r.status)}</span>` : "";
+      const trig = r.triggerName ? `<div class="muted">Trigger: ${esc(r.triggerName)}</div>` : "";
+      return `<tr>
+        <td><div>${esc(r.name)}${extra}</div><div class="muted">${esc(r.id)}</div>${trig}</td>
+        <td><span class="pill">${esc(r.typeLabel)}</span></td>
+        <td>${esc(r.envName || "-")}</td>
+        <td>${esc(r.location || "-")}</td>
+        <td>${esc(fmtDate(r.createdAt))}</td>
+        <td title="${esc(r.archiveWhy)}">${scorePill(r.archiveScore)}</td>
+        <td>${chips}</td>
+      </tr>`;
+    })
+    .join("");
+
+  document.querySelectorAll("thead th[data-k]").forEach((th) => {
+    th.querySelector(".arrow").textContent = th.dataset.k === sortKey ? (sortAsc ? "\u25B2" : "\u25BC") : "";
+  });
+}
+
+document.querySelectorAll("thead th[data-k]").forEach((th) => {
+  th.addEventListener("click", () => {
+    const k = th.dataset.k;
+    if (k === sortKey) sortAsc = !sortAsc;
+    else { sortKey = k; sortAsc = true; }
+    resPager.reset();
+    render();
+  });
+});
+
+let debounce;
+$("q").addEventListener("input", () => {
+  clearTimeout(debounce);
+  debounce = setTimeout(() => { resPager.reset(); render(); }, 150);
+});
+["typeFilter", "envFilter"].forEach((id) =>
+  $(id).addEventListener("input", () => { resPager.reset(); render(); })
+);
+$("clearFilters").addEventListener("click", () => {
+  $("q").value = "";
+  $("typeFilter").value = "";
+  $("envFilter").value = "";
+  resPager.reset();
+  render();
+});
+
+// ---- actions ----
+$("themeBtn").addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme");
+  document.documentElement.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+});
+
+// ---- CSV export ----
+function csvCell(v) {
+  // Excel evaluates a leading = + - @ even inside quotes, and resource names are
+  // maker-controlled, so neutralise the formula rather than exporting it.
+  let s = String(Array.isArray(v) ? v.join(";") : typeof v === "boolean" ? (v ? "Yes" : "No") : v ?? "");
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
+const csvOf = (cols, rows) => [cols.join(","), ...rows.map((r) => cols.map((c) => csvCell(r[c])).join(","))].join("\r\n");
+
+// Everything the report holds, so the export can reproduce what the charts show.
+function buildExports() {
+  const resCols = ["name", "id", "type", "typeLabel", "subType", "envName", "envId", "envType",
+    "location", "createdAt", "createdBy", "modifiedAt", "editedBy", "ownerId", "quarantined",
+    "status", "triggerType", "triggerName", "triggerOp", "archiveScore", "archiveWhy",
+    "connectors", "operations"];
+
+  const envCols = ["name", "id", "envType", "location", "isManaged", "envGroupId",
+    "resourceCount", "createdAt", "createdBy", "modifiedAt"];
+
+  const rows = visible();
+  const envIds = new Set(ENVS.map((e) => e.id));
+
+  const summary = [];
+  const push = (section, key, value) => summary.push({ section, key, value });
+  Object.entries(DATA.counts ?? {}).forEach(([k, v]) => push("Summary", k, v));
+  Object.entries(DATA.growth ?? {}).forEach(([k, v]) => push("Growth", k, v));
+  const dist = {
+    "By type": DATA.byType, "By region": DATA.byRegion, "By environment": DATA.byEnvironment,
+    "By environment type": DATA.byEnvType, "Managed environments": DATA.byEnvManaged,
+    "Environment groups": DATA.byEnvGrouped, "Connector usage": DATA.connectorUsage,
+    "Connector tier": DATA.connectorTier, "Connector publisher": DATA.connectorPub,
+    "Connector release": DATA.connectorRel, "Connector operations": DATA.byOperation,
+    "Flow state": DATA.flowState, "Flow trigger type": DATA.flowTrigger,
+    "Flow trigger connector": DATA.byTrigger, "Top makers": DATA.topMakers,
+    "Top editors": DATA.topEditors, "Maker department": DATA.byDepartment,
+    "Maker country": DATA.byCountry, "Resource age": DATA.ageBuckets,
+    "Connectors per resource": DATA.connectorDepth, "Created per month": DATA.trend,
+    "Archive score": DATA.riskBuckets, "Duplicate names": DATA.duplicates,
+    "Non-production naming": DATA.namingHits, "Maker environment spread": DATA.makerSprawl,
+    "Policy findings": DATA.dlpVerdicts, "Policy coverage": DATA.envPolicyMix,
+    "Dataverse database GB": DATA.capacityByEnv,
+  };
+  Object.entries(dist).forEach(([s, items]) => arr(items).forEach((i) => push(s, i.key, i.count)));
+  arr(DATA.hygiene).forEach((h) => push("Governance signal", h.key, h.count));
+  arr(DATA.yoyByType).forEach((y) => push("Year over year", y.key, `${y.count} this year, ${y.prev} last year`));
+  arr(DATA.tenantSettings).forEach((t) => push("Tenant setting", t.key, t.value));
+  arr(DATA.groupRules).forEach((g) => push("Environment group rule", `${g.group} / ${g.rule}`, g.value));
+  arr(DATA.tenantCapacity).forEach((t) => push("Tenant capacity GB", t.key, `${t.actual} of ${t.entitled} (${t.status})`));
+  arr(DATA.billingPolicies).forEach((b) => push("Billing policy", b.name, b.status));
+  arr(DATA.deep?.sources).forEach((s) => push("Collection status", s.key, s.value));
+
+  const out = [
+    { name: "pp-resources.csv", text: csvOf(resCols, rows.filter((r) => !envIds.has(r.id))) },
+    { name: "pp-environments.csv", text: csvOf(envCols, ENVS) },
+    { name: "pp-summary.csv", text: csvOf(["section", "key", "value"], summary) },
+  ];
+
+  if (arr(DATA.envPosture).length) {
+    out.push({
+      name: "pp-environment-posture.csv",
+      text: csvOf(["name", "id", "envType", "sku", "isManaged", "protection", "group", "dataverse", "cmk",
+        "dbGb", "fileGb", "logGb", "policyCount", "policies", "resourceCount"], DATA.envPosture),
+    });
+  }
+  if (arr(DATA.dlpFindings).length) {
+    out.push({
+      name: "pp-policy-findings.csv",
+      text: csvOf(["name", "typeLabel", "envName", "policy", "verdict", "detail"], DATA.dlpFindings),
+    });
+  }
+  return out;
+}
+
+function download(name, text) {
+  // BOM so Excel reads the UTF-8 correctly.
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" }));
+  const a = Object.assign(document.createElement("a"), { href: url, download: name });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+$("csvBtn").addEventListener("click", () => {
+  // The export leaves the encrypted container, so say so before it lands on disk.
+  if (WAS_ENCRYPTED && !confirm("The CSV files are written unencrypted and will not be protected by this report's passphrase.\n\nContinue?")) return;
+  buildExports().forEach((f) => download(f.name, f.text));
+});
+
+// ---- tabs ----
+const tabs = [...document.querySelectorAll('#tabs [role="tab"]')];
+
+function showTab(id) {
+  tabs.forEach((t) => {
+    const on = t.id === id;
+    t.setAttribute("aria-selected", String(on));
+    t.tabIndex = on ? 0 : -1;
+    $(t.getAttribute("aria-controls")).hidden = !on;
+  });
+}
+
+tabs.forEach((t) => t.addEventListener("click", () => showTab(t.id)));
+
+$("tabs").addEventListener("keydown", (ev) => {
+  const i = tabs.findIndex((t) => t.id === ev.target.id);
+  if (i < 0) return;
+  const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[ev.key];
+  if (next === undefined) return;
+  ev.preventDefault();
+  const t = tabs[(next + tabs.length) % tabs.length];
+  showTab(t.id);
+  t.focus();
+});
+
+// Printing should produce the whole report, not just the open tab.
+addEventListener("beforeprint", () => tabs.forEach((t) => ($(t.getAttribute("aria-controls")).hidden = false)));
+addEventListener("afterprint", () => showTab(tabs.find((t) => t.getAttribute("aria-selected") === "true").id));
+
+render();
+}
+
+boot();
+</script>
+</body>
+</html>

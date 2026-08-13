@@ -1,0 +1,14 @@
+# Generated output contains real tenant identifiers - never commit it.
+dashboard.html
+demo-dashboard.html
+stress-dashboard.html
+inventory.json
+*.zip
+_scan.ps1
+_shot.png
+WhatsApp Image*
+locked-demo.html
+_build.ps1
+_scan2.ps1
+_test.csv
+demo-deep.html
